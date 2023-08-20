@@ -14,6 +14,7 @@ class AddressBar(Input):
 class NavigationBar(Widget):
     DEFAULT_CSS = """
     NavigationBar {
+        dock: top;
         width: 100%;
         height: auto;
         background: $panel;
