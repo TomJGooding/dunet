@@ -36,6 +36,18 @@ class BrowsingHistory:
 
         self.current_url = new_url
 
+    def go_back(self) -> URLNode | None:
+        if self.current_url is None or self.current_url.prev_url is None:
+            return None
+        self.current_url = self.current_url.prev_url
+        return self.current_url
+
+    def go_forward(self) -> URLNode | None:
+        if self.current_url is None or self.current_url.next_url is None:
+            return None
+        self.current_url = self.current_url.next_url
+        return self.current_url
+
 
 class AddressBar(Input):
     def __init__(self, value: str | None = None) -> None:
@@ -68,8 +80,8 @@ class NavigationBar(Widget):
 
     def compose(self) -> ComposeResult:
         with Horizontal():
-            yield Button("\u2190", id="back-btn", disabled=True)
-            yield Button("\u2192", id="forward-btn", disabled=True)
+            yield Button("\u2190", id="back-btn")
+            yield Button("\u2192", id="forward-btn")
             yield Button("\u21BB", id="reload-btn")
             yield AddressBar()
 
@@ -95,6 +107,7 @@ class DunetApp(App):
         html = self.query_one(HTML)
         html.load_url(event.value)
         self.query_one(VerticalScroll).focus()
+
         if (
             self.browsing_history.current_url is None
             or event.value != self.browsing_history.current_url.url
@@ -105,6 +118,7 @@ class DunetApp(App):
     def on_html_link_clicked(self, event: HTML.LinkClicked) -> None:
         self.query_one(AddressBar).value = event.href
         event.html.load_url(event.href)
+
         assert self.browsing_history.current_url is not None
         if event.href != self.browsing_history.current_url.url:
             self.browsing_history.add_new_url(event.href)
@@ -115,6 +129,22 @@ class DunetApp(App):
             url = self.browsing_history.current_url.url
             self.query_one(AddressBar).value = url
             self.query_one(HTML).load_url(url)
+
+    @on(Button.Pressed, "#back-btn")
+    def on_back_button_pressed(self) -> None:
+        prev_url: URLNode | None = self.browsing_history.go_back()
+        if prev_url is None:
+            return
+        self.query_one(AddressBar).value = prev_url.url
+        self.query_one(HTML).load_url(prev_url.url)
+
+    @on(Button.Pressed, "#forward-btn")
+    def on_forward_button_pressed(self) -> None:
+        next_url: URLNode | None = self.browsing_history.go_forward()
+        if next_url is None:
+            return
+        self.query_one(AddressBar).value = next_url.url
+        self.query_one(HTML).load_url(next_url.url)
 
 
 if __name__ == "__main__":
