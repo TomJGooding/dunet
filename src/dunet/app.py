@@ -1,4 +1,3 @@
-from httpx import URL
 from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
@@ -20,7 +19,7 @@ class DunetApp(App):
         event.input.blur()
 
         html = self.query_one(HTML)
-        html.load(URL(event.value))
+        html.load_url(event.value)
 
 
 if __name__ == "__main__":
