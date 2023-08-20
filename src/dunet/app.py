@@ -1,25 +1,66 @@
 from textual import on
 from textual.app import App, ComposeResult
-from textual.containers import VerticalScroll
-from textual.widgets import Footer, Input
+from textual.containers import Horizontal, VerticalScroll
+from textual.widget import Widget
+from textual.widgets import Button, Footer, Input
 from textual_html import HTML
 
 
-class DunetApp(App):
-    BINDINGS = [("q", "quit", "Quit")]
+class AddressBar(Input):
+    def __init__(self, value: str | None = None) -> None:
+        super().__init__(value, placeholder="Enter web address")
+
+
+class NavigationBar(Widget):
+    DEFAULT_CSS = """
+    NavigationBar {
+        width: 100%;
+        height: auto;
+        background: $panel;
+        border: hkey $background;
+    }
+
+    NavigationBar Horizontal {
+        height: auto;
+    }
+
+    NavigationBar Button {
+        min-width: 5;
+        margin: 0 1;
+    }
+
+    NavigationBar AddressBar {
+        width: 1fr;
+    }
+    """
 
     def compose(self) -> ComposeResult:
-        yield Input("http://example.com/", placeholder="Enter web address")
+        with Horizontal():
+            yield Button("\u2190", id="back-btn", disabled=True)
+            yield Button("\u2192", id="forward-btn", disabled=True)
+            yield Button("\u21BB", id="reload-btn")
+            yield AddressBar()
+
+
+class DunetApp(App):
+    BINDINGS = [("ctrl+q", "quit", "Quit")]
+
+    def compose(self) -> ComposeResult:
+        yield NavigationBar()
         with VerticalScroll():
             yield HTML(use_readability=True)
         yield Footer()
 
-    @on(Input.Submitted)
-    def _on_input_submitted(self, event: Input.Submitted) -> None:
-        event.input.blur()
+    def on_mount(self) -> None:
+        self.query_one(AddressBar).focus()
 
+    @on(AddressBar.Submitted)
+    def on_address_bar_submitted(self, event: AddressBar.Submitted) -> None:
+        if not event.value:
+            return
         html = self.query_one(HTML)
         html.load_url(event.value)
+        self.query_one(VerticalScroll).focus()
 
     @on(HTML.LinkClicked)
     def on_html_link_clicked(self, event: HTML.LinkClicked) -> None:
