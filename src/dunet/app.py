@@ -21,6 +21,11 @@ class DunetApp(App):
         html = self.query_one(HTML)
         html.load_url(event.value)
 
+    @on(HTML.LinkClicked)
+    def on_html_link_clicked(self, event: HTML.LinkClicked) -> None:
+        event.html.load_url(event.href)
+        self.query_one(Input).value = event.href
+
 
 if __name__ == "__main__":
     app = DunetApp()
