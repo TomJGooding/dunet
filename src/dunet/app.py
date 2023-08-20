@@ -103,11 +103,18 @@ class DunetApp(App):
 
     @on(HTML.LinkClicked)
     def on_html_link_clicked(self, event: HTML.LinkClicked) -> None:
+        self.query_one(AddressBar).value = event.href
         event.html.load_url(event.href)
-        self.query_one(Input).value = event.href
         assert self.browsing_history.current_url is not None
         if event.href != self.browsing_history.current_url.url:
             self.browsing_history.add_new_url(event.href)
+
+    @on(Button.Pressed, "#reload-btn")
+    def on_reload_button_pressed(self) -> None:
+        if self.browsing_history.current_url is not None:
+            url = self.browsing_history.current_url.url
+            self.query_one(AddressBar).value = url
+            self.query_one(HTML).load_url(url)
 
 
 if __name__ == "__main__":
