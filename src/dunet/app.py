@@ -99,6 +99,20 @@ class DunetApp(App):
 
     def on_mount(self) -> None:
         self.query_one(AddressBar).focus()
+        self.update_navigation_buttons()
+
+    def update_navigation_buttons(self) -> None:
+        back_button = self.query_one("#back-btn", Button)
+        forward_button = self.query_one("#forward-btn", Button)
+
+        current_url = self.browsing_history.current_url
+        if current_url is None:
+            back_button.disabled = True
+            forward_button.disabled = True
+            return
+
+        back_button.disabled = current_url.prev_url is None
+        forward_button.disabled = current_url.next_url is None
 
     @on(AddressBar.Submitted)
     def on_address_bar_submitted(self, event: AddressBar.Submitted) -> None:
@@ -113,15 +127,18 @@ class DunetApp(App):
             or event.value != self.browsing_history.current_url.url
         ):
             self.browsing_history.add_new_url(event.value)
+            self.update_navigation_buttons()
 
     @on(HTML.LinkClicked)
     def on_html_link_clicked(self, event: HTML.LinkClicked) -> None:
         self.query_one(AddressBar).value = event.href
         event.html.load_url(event.href)
+        self.query_one(VerticalScroll).focus()
 
         assert self.browsing_history.current_url is not None
         if event.href != self.browsing_history.current_url.url:
             self.browsing_history.add_new_url(event.href)
+            self.update_navigation_buttons()
 
     @on(Button.Pressed, "#reload-btn")
     def on_reload_button_pressed(self) -> None:
@@ -137,6 +154,7 @@ class DunetApp(App):
             return
         self.query_one(AddressBar).value = prev_url.url
         self.query_one(HTML).load_url(prev_url.url)
+        self.update_navigation_buttons()
 
     @on(Button.Pressed, "#forward-btn")
     def on_forward_button_pressed(self) -> None:
@@ -145,6 +163,7 @@ class DunetApp(App):
             return
         self.query_one(AddressBar).value = next_url.url
         self.query_one(HTML).load_url(next_url.url)
+        self.update_navigation_buttons()
 
 
 if __name__ == "__main__":
