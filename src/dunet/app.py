@@ -17,7 +17,7 @@ class URLNode:
     prev_url: URLNode | None = None
 
 
-class BrowsingHistory:
+class NavigationHistory:
     def __init__(
         self,
         first_url: URLNode | None = None,
@@ -89,7 +89,7 @@ class NavigationBar(Widget):
 class DunetApp(App):
     BINDINGS = [("ctrl+q", "quit", "Quit")]
 
-    browsing_history = BrowsingHistory()
+    navigation_history = NavigationHistory()
 
     def compose(self) -> ComposeResult:
         yield NavigationBar()
@@ -105,7 +105,7 @@ class DunetApp(App):
         back_button = self.query_one("#back-btn", Button)
         forward_button = self.query_one("#forward-btn", Button)
 
-        current_url = self.browsing_history.current_url
+        current_url = self.navigation_history.current_url
         if current_url is None:
             back_button.disabled = True
             forward_button.disabled = True
@@ -140,10 +140,10 @@ class DunetApp(App):
         self.query_one(VerticalScroll).focus()
 
         if (
-            self.browsing_history.current_url is None
-            or event.value != self.browsing_history.current_url.url
+            self.navigation_history.current_url is None
+            or event.value != self.navigation_history.current_url.url
         ):
-            self.browsing_history.add_new_url(event.value)
+            self.navigation_history.add_new_url(event.value)
             self.update_navigation_buttons()
 
     @on(HTML.LinkClicked)
@@ -152,21 +152,21 @@ class DunetApp(App):
         event.html.load_url(event.href)
         self.query_one(VerticalScroll).focus()
 
-        assert self.browsing_history.current_url is not None
-        if event.href != self.browsing_history.current_url.url:
-            self.browsing_history.add_new_url(event.href)
+        assert self.navigation_history.current_url is not None
+        if event.href != self.navigation_history.current_url.url:
+            self.navigation_history.add_new_url(event.href)
             self.update_navigation_buttons()
 
     @on(Button.Pressed, "#reload-btn")
     def on_reload_button_pressed(self) -> None:
-        if self.browsing_history.current_url is not None:
-            url = self.browsing_history.current_url.url
+        if self.navigation_history.current_url is not None:
+            url = self.navigation_history.current_url.url
             self.query_one(AddressBar).value = url
             self.query_one(HTML).load_url(url)
 
     @on(Button.Pressed, "#back-btn")
     def on_back_button_pressed(self) -> None:
-        prev_url: URLNode | None = self.browsing_history.go_back()
+        prev_url: URLNode | None = self.navigation_history.go_back()
         if prev_url is None:
             return
         self.query_one(AddressBar).value = prev_url.url
@@ -175,7 +175,7 @@ class DunetApp(App):
 
     @on(Button.Pressed, "#forward-btn")
     def on_forward_button_pressed(self) -> None:
-        next_url: URLNode | None = self.browsing_history.go_forward()
+        next_url: URLNode | None = self.navigation_history.go_forward()
         if next_url is None:
             return
         self.query_one(AddressBar).value = next_url.url
