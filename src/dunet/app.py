@@ -109,10 +109,27 @@ class DunetApp(App):
         if current_url is None:
             back_button.disabled = True
             forward_button.disabled = True
+            # Workaround for https://github.com/Textualize/textual/issues/3130
+            back_button.mouse_over = False
+            forward_button.mouse_over = False
             return
 
-        back_button.disabled = current_url.prev_url is None
-        forward_button.disabled = current_url.next_url is None
+        if current_url.prev_url is None:
+            back_button.disabled = True
+            # Workaround for https://github.com/Textualize/textual/issues/3130
+            back_button.mouse_over = False
+        else:
+            back_button.disabled = False
+
+        if current_url.next_url is None:
+            forward_button.disabled = True
+            # Workaround for https://github.com/Textualize/textual/issues/3130
+            forward_button.mouse_over = False
+        else:
+            forward_button.disabled = False
+
+        # back_button.disabled = current_url.prev_url is None
+        # forward_button.disabled = current_url.next_url is None
 
     @on(AddressBar.Submitted)
     def on_address_bar_submitted(self, event: AddressBar.Submitted) -> None:
