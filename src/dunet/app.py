@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from httpx import URL
 from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, VerticalScroll
@@ -148,13 +149,20 @@ class DunetApp(App):
 
     @on(HTML.LinkClicked)
     def on_html_link_clicked(self, event: HTML.LinkClicked) -> None:
-        self.query_one(AddressBar).value = event.href
-        event.html.load_url(event.href)
+        url_candidate: URL = URL(event.href)
+        assert self.navigation_history.current_url is not None
+        current_url: str = self.navigation_history.current_url.url
+        if url_candidate.is_absolute_url:
+            url = str(url_candidate)
+        else:
+            url = str(URL(current_url).join(url_candidate))
+
+        self.query_one(AddressBar).value = url
+        event.html.load_url(url)
         self.query_one(VerticalScroll).focus()
 
-        assert self.navigation_history.current_url is not None
-        if event.href != self.navigation_history.current_url.url:
-            self.navigation_history.add_new_url(event.href)
+        if url != current_url:
+            self.navigation_history.add_new_url(url)
             self.update_navigation_buttons()
 
     @on(Button.Pressed, "#reload-btn")
